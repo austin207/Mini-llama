@@ -1,0 +1,1 @@
+"torch\ntransformers\nsentencepiece\nfastapi\nuvicorn\nnumpy\nscipy\nmatplotlib\nscikit-learn\npandas" 

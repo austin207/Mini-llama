@@ -1,0 +1,8 @@
+tokenizer:
+  vocab_size: 8192
+  model_type: bpe
+  special_tokens:
+    - <pad>
+    - <unk>
+    - <bos>
+    - <eos>

@@ -1,0 +1,6 @@
+train:
+  batch_size: 16
+  epochs: 10
+  lr: 5e-4
+  weight_decay: 0.01
+  seed: 42

@@ -1,1 +1,10 @@
-"torch\ntransformers\nsentencepiece\nfastapi\nuvicorn\nnumpy\nscipy\nmatplotlib\nscikit-learn\npandas" 
+torch
+transformers
+sentencepiece
+fastapi
+uvicorn
+numpy
+scipy
+matplotlib
+scikit-learn
+pandas

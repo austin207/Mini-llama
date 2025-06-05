@@ -1,6 +1,14 @@
+# Python virtual environments
 venv/
+myenv/
+
+# Python cache and bytecode
 __pycache__/
 *.pyc
+
+# Data and checkpoints
 data/
+checkpoints/
+
+# Local files
 local.txt
-checkpoints

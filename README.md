@@ -13,3 +13,8 @@ A minimal LLaMA-style transformer implementation.
 ## Configs
 - `configs/model.yaml`: Model architecture
 - `configs/train.yaml`: Training settings
+
+## Specific Training command
+```
+python -m src.train
+```

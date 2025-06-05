@@ -242,10 +242,20 @@ def main():
                 plot_losses(train_losses, val_losses, len(train_loader))
             
             # Manual save check
-            if keyboard.is_pressed('m') or keyboard.is_pressed('M'):
+            
+            # The below code is for linux users
+            flag_path = os.path.join(checkpoint_dir, "manual_save.flag")
+            if os.path.exists(flag_path):
                 manual_path = f"{checkpoint_dir}/mini-llama-manual-step{step}.pt"
                 safe_checkpoint_save(model, manual_path, max_checkpoints=20)
-                print(f"🎯 MANUAL SAVE! Saved at step {step}", flush=True)
+                os.remove(flag_path)  # Remove flag after saving
+            # Uncomment the following lines if you want to use manual save with keyboard input
+
+            # the code below is for windows users
+            #if keyboard.is_pressed('m') or keyboard.is_pressed('M'):
+            #    manual_path = f"{checkpoint_dir}/mini-llama-manual-step{step}.pt"
+            #    safe_checkpoint_save(model, manual_path, max_checkpoints=20)
+            #    print(f"🎯 MANUAL SAVE! Saved at step {step}", flush=True)
             
             # Inference every N steps
             if step % inference_interval == 0:

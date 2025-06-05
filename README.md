@@ -99,3 +99,12 @@ These methods will let you download the dataset to your local machine for furthe
 ```
 python -m src.train
 ```
+## Specific Tokenizer commands
+
+```
+python3 -m src.tokenizer.train_tokenizer
+
+python3 -m src.tokenizer.converter
+
+python3 -m src.tokenizer.encode_corpus
+```

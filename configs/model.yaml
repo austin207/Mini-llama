@@ -1,8 +1,8 @@
 model:
   vocab_size: 8192
-  n_layers: 4                  
-  n_heads: 6                     
-  d_model: 384                
-  d_ff: 1536                    
-  max_seq_len: 512
-  dropout: 0.3                 
+  n_layers: 12         # 10–13 is safe for 16GB, 12 is a sweet spot
+  n_heads: 8           # 8 heads (d_model must be divisible by n_heads)
+  d_model: 512         # Embedding dimension (512 is safe for 16GB)
+  d_ff: 2048           # Feedforward dimension (4x d_model is standard)
+  max_seq_len: 1024     # You can try 1024 if your batch size is small
+  dropout: 0.2         # For regularization

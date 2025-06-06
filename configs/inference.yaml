@@ -15,10 +15,10 @@ model:
 # Default generation parameters
 generation:
   max_length: 100
-  temperature: 0.8
-  top_k: 50
+  temperature: 0.7
+  top_k: 150
   top_p: 0.9
-  repetition_penalty: 1.1
+  repetition_penalty: 2.8
   do_sample: true
   num_return_sequences: 1
 

@@ -103,17 +103,17 @@ class LlamaInference:
         # Load model
         self.model = MiniLlamaModel(self.model_config).to(self.device)
         
-        # Load checkpoint
+        # Load checkpoint with compiled model support
         checkpoint_path = self.config['model']['checkpoint_path']
         print(f"📂 Loading checkpoint: {checkpoint_path}")
         
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
-        if 'model_state_dict' in checkpoint:
-            self.model.load_state_dict(checkpoint['model_state_dict'])
-            print(f"📊 Checkpoint info: Step {checkpoint.get('global_step', 'Unknown')}, "
-                  f"Loss {checkpoint.get('best_val_loss', 'Unknown')}")
-        else:
-            self.model.load_state_dict(checkpoint)
+        state_dict, checkpoint_info = self.load_compiled_checkpoint(checkpoint_path)
+        self.model.load_state_dict(state_dict)
+        
+        # Print checkpoint info if available
+        if isinstance(checkpoint_info, dict) and 'global_step' in checkpoint_info:
+            print(f"📊 Checkpoint info: Step {checkpoint_info.get('global_step', 'Unknown')}, "
+                  f"Loss {checkpoint_info.get('best_val_loss', 'Unknown')}")
         
         self.model.eval()
         
@@ -121,6 +121,34 @@ class LlamaInference:
         total_params = sum(p.numel() for p in self.model.parameters())
         print(f"✅ Model loaded: {total_params:,} parameters")
         print(f"📊 Model config: {self.model_config}")
+
+    def load_compiled_checkpoint(self, checkpoint_path):
+        """Load checkpoint that was saved from a compiled model"""
+        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        
+        if 'model_state_dict' in checkpoint:
+            state_dict = checkpoint['model_state_dict']
+        else:
+            state_dict = checkpoint
+        
+        # Check if this is a compiled model checkpoint (has _orig_mod prefix)
+        has_orig_mod = any(key.startswith('_orig_mod.') for key in state_dict.keys())
+        
+        if has_orig_mod:
+            print("🔄 Detected compiled model checkpoint, removing _orig_mod prefix...")
+            # Remove _orig_mod. prefix from all keys
+            new_state_dict = {}
+            for key, value in state_dict.items():
+                if key.startswith('_orig_mod.'):
+                    new_key = key[len('_orig_mod.'):]  # Remove the prefix
+                    new_state_dict[new_key] = value
+                else:
+                    new_state_dict[key] = value
+            
+            state_dict = new_state_dict
+            print("✅ Successfully mapped compiled model keys to standard model")
+        
+        return state_dict, checkpoint
 
     def load_inference_config(self, config_path=None):
         """Load inference configuration from YAML file"""

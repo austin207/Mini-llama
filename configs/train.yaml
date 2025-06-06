@@ -1,20 +1,24 @@
 train:
-  batch_size: 32             # Increased for your 20GB VRAM
-  gradient_accumulation_steps: 4
-  epochs: 30
+  batch_size: 16             # Reduced from 32
+  gradient_accumulation_steps: 8 # Increased to maintain effective batch size
+  epochs: 5
   lr: 3e-4                   # Increased learning rate
   weight_decay: 0.1
   seed: 42
   
   # NEW: Subset training options
-  max_sequences: 100000      # Start with 100K sequences (comment out for full dataset)
+  max_sequences: 10000      # Start with 100K sequences (comment out for full dataset)
   # max_sequences: null      # Use this for full 10.8M sequence training
   
   checkpoint_interval_steps: 1000   # More frequent checkpoints
   inference_interval_steps: 2000
   validation_split: 0.01     # Reduced to 1% for massive dataset
+
+  # Memoy and performance optimizations
+  gradient_checkpointing: true # Enable gradient checkpointing
+  dataloader_num_workers: 2 # Reduced from 4
   
   paths:
-    data: "data/corpus_ids_final.dat"  # Your concatenated file
+    data: "data/checkpoints/corpus_ids_final.dat"  # Your concatenated file
     tokenizer: "src/tokenizer/llama.model"
     checkpoints: "checkpoints"

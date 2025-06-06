@@ -1,0 +1,43 @@
+# Inference Configuration for Mini-LLaMA
+model:
+  # Path to trained model checkpoint
+  checkpoint_path: "checkpoints/mini-llama-best_loss1.2347.pt"
+  
+  # Model configuration
+  config_path: "configs/model.yaml"
+  
+  # Tokenizer configuration  
+  tokenizer_path: "src/tokenizer/llama.model"
+  
+  # Device configuration
+  device: "auto"  # "cuda", "cpu", or "auto" for automatic detection
+
+# Default generation parameters
+generation:
+  max_length: 100
+  temperature: 0.8
+  top_k: 50
+  top_p: 0.9
+  repetition_penalty: 1.1
+  do_sample: true
+  num_return_sequences: 1
+
+# Benchmark configuration
+benchmark:
+  runs_per_prompt: 3
+  default_prompts:
+    - "Once upon a time"
+    - "The future of artificial intelligence is"
+    - "In a world where technology"
+    - "The quick brown fox"
+    - "Explain the concept of machine learning"
+    - "Write a short story about"
+    - "The most important thing in life is"
+    - "Scientists recently discovered"
+
+# Performance monitoring
+monitoring:
+  enable_timing: true
+  show_memory_usage: true
+  save_stats: true
+  stats_file: "logs/inference_stats.json"

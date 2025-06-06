@@ -12,7 +12,8 @@ import sys
 from pathlib import Path
 from torch.utils.data import DataLoader, random_split
 from torch.optim.lr_scheduler import ReduceLROnPlateau, OneCycleLR
-from torch.cuda.amp import GradScaler, autocast
+from torch.cuda.amp import GradScaler
+from torch.amp import autocast
 import matplotlib.pyplot as plt
 import numpy as np
 from .models.llama import MiniLlamaModel
@@ -62,13 +63,21 @@ def get_memory_usage():
 
 def plot_losses(train_losses, val_losses, train_loader_len, learning_rates=None):
     """Enhanced plotting with memory and learning rate tracking"""
-    plt.clf()
+    
+    # Fix: Check if figure exists, if not create it, if yes just select it
+    if not plt.fignum_exists(1):
+        plt.figure(1, figsize=(15, 5) if learning_rates else (10, 5))
+    else:
+        plt.figure(1)  # Just select existing figure
+    
+    plt.clf()  # Clear the figure content
     
     # Create subplots
     if learning_rates:
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
+        ax1 = plt.subplot(1, 2, 1)
+        ax2 = plt.subplot(1, 2, 2)
     else:
-        fig, ax1 = plt.subplots(1, 1, figsize=(10, 5))
+        ax1 = plt.subplot(1, 1, 1)
     
     # Loss plot
     ax1.plot(train_losses, label='Train Loss', color='tab:blue', alpha=0.7)
@@ -92,7 +101,8 @@ def plot_losses(train_losses, val_losses, train_loader_len, learning_rates=None)
         ax2.set_yscale('log')
     
     plt.tight_layout()
-    plt.pause(0.01)
+    plt.draw()
+    plt.show(block=False)
 
 def check_disk_space(path, min_gb=1):
     """Check if there's enough disk space (in GB)"""
@@ -197,7 +207,7 @@ def inference_sample(model, tokenizer, device, max_length=50):
         
         with torch.no_grad():
             for _ in range(max_length):
-                with autocast():
+                with autocast('cuda'):
                     logits = model(generated)
                 
                 # Apply temperature for better generation
@@ -527,7 +537,7 @@ def main():
                 
                 # Mixed precision forward pass
                 if use_amp:
-                    with autocast():
+                    with autocast('cuda'):
                         logits = model(x)
                         loss = criterion(logits.view(-1, logits.size(-1)), y.view(-1))
                         loss = loss / gradient_accumulation_steps
@@ -636,7 +646,7 @@ def main():
                     x_val, y_val = x_val.to(device, non_blocking=True), y_val.to(device, non_blocking=True)
                     
                     if use_amp:
-                        with autocast():
+                        with autocast('cuda'):
                             logits = model(x_val)
                             vloss = criterion(logits.view(-1, logits.size(-1)), y_val.view(-1))
                     else:
@@ -711,6 +721,8 @@ def main():
 
     plt.ioff()
     plt.show()
+
+    memory_info = get_memory_usage()
 
     # Enhanced final model info
     print("\n🎉 Training Complete!")

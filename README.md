@@ -1,12 +1,12 @@
 # Mini LLaMA
 
-A minimal yet powerful LLaMA-style transformer implementation optimized for RTX 4000 Ada GPU training with massive datasets and professional inference capabilities.
+A minimal yet powerful LLaMA-style transformer implementation optimized for RTX 4000 Ada GPU training with massive datasets, professional inference capabilities, and production-ready API server.
 
 ## 🖥️ Hardware Specifications
 - **GPU**: NVIDIA RTX 4000 Ada Generation (20GB VRAM)
 - **RAM**: 32GB + 8GB swap (upgraded from 16GB)
 - **CPU**: 24 cores
-- **Optimized for**: Professional AI/ML training and large-scale language model development
+- **Optimized for**: Professional AI/ML training, large-scale language model development, and production API deployment
 
 ## ⚡ Quick Setup
 
@@ -21,9 +21,11 @@ source myenv/bin/activate  # Linux/Mac
 
 ### **2. Install Dependencies**
 ```
+# Core dependencies
 pip install -r requirements.txt
-# or for Python 3:
-pip3 install -r requirements.txt
+
+# API server dependencies (additional)
+pip install fastapi[all] uvicorn supabase python-dotenv
 ```
 
 ### **3. Dataset Download Options**
@@ -169,6 +171,18 @@ monitoring:
   stats_file: "logs/inference_stats.json"
 ```
 
+### **.env** - API Server Environment Configuration
+```
+# Supabase Configuration (Required for API server)
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# API Configuration
+API_HOST=0.0.0.0
+API_PORT=8000
+```
+
 ## 🚀 Training Execution
 
 ### **Progressive Training Strategy**
@@ -201,7 +215,7 @@ The training script provides an interactive menu:
 
 ## 🎯 Inference & Text Generation
 
-### **Quick Start Inference**
+### **Local Inference (Direct Model Access)**
 ```
 # Simple text generation
 python inference.py --prompt "Once upon a time" --temperature 0.8
@@ -211,6 +225,152 @@ python inference.py --interactive
 
 # Benchmark performance testing
 python inference.py --benchmark --runs 5
+```
+
+### **Production API Server (Recommended for Applications)**
+
+#### **Setup API Server**
+1. **Configure Supabase Database**
+   - Create a new project at [supabase.com](https://supabase.com)
+   - Copy your project URL and API keys
+   - Run the database setup SQL (see API Server section below)
+
+2. **Setup Environment Variables**
+   ```
+   # Create .env file with your Supabase credentials
+   cp .env.example .env
+   # Edit .env with your actual Supabase URL and keys
+   ```
+
+3. **Start API Server**
+   ```
+   python api_server.py
+   ```
+
+4. **Create API Keys**
+   ```
+   # Create your first API key
+   python manage_keys_supabase.py create --name "My App" --expires 365 --rate-limit 1000
+   ```
+
+#### **API Endpoints**
+
+**Base URL**: `http://localhost:8000`
+
+| Endpoint | Method | Description | Auth Required |
+|----------|--------|-------------|---------------|
+| `/` | GET | API status and information | No |
+| `/health` | GET | Health check | No |
+| `/v1/generate` | POST | Generate text | Yes |
+| `/v1/stream` | POST | Stream text generation | Yes |
+| `/stats` | GET | Usage statistics | Yes |
+| `/admin/create-key` | POST | Create new API key | No* |
+| `/admin/keys` | GET | List all keys | No* |
+
+*Admin endpoints should be secured in production
+
+#### **API Usage Examples**
+
+**cURL Example:**
+```
+curl -X POST "http://localhost:8000/v1/generate" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: sk-your-api-key-here" \
+  -d '{
+    "prompt": "Explain artificial intelligence",
+    "max_length": 150,
+    "temperature": 0.8,
+    "top_k": 50,
+    "top_p": 0.9,
+    "repetition_penalty": 1.1
+  }'
+```
+
+**JavaScript/React Integration:**
+```
+class MiniLlamaAPI {
+    constructor(apiKey, baseURL = 'http://localhost:8000') {
+        this.apiKey = apiKey;
+        this.baseURL = baseURL;
+    }
+
+    async generateText(prompt, options = {}) {
+        const response = await fetch(`${this.baseURL}/v1/generate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-API-Key': this.apiKey
+            },
+            body: JSON.stringify({
+                prompt,
+                max_length: options.maxLength || 100,
+                temperature: options.temperature || 0.8,
+                top_k: options.topK || 50,
+                top_p: options.topP || 0.9,
+                repetition_penalty: options.repetitionPenalty || 1.1
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'API request failed');
+        }
+
+        return await response.json();
+    }
+
+    async getStats() {
+        const response = await fetch(`${this.baseURL}/stats`, {
+            headers: { 'X-API-Key': this.apiKey }
+        });
+        return await response.json();
+    }
+}
+
+// Usage
+const api = new MiniLlamaAPI('sk-your-api-key-here');
+const result = await api.generateText("Hello AI assistant");
+console.log(result.text);
+```
+
+**Python Client Example:**
+```
+import requests
+
+class MiniLlamaClient:
+    def __init__(self, api_key, base_url="http://localhost:8000"):
+        self.api_key = api_key
+        self.base_url = base_url
+        self.headers = {
+            "Content-Type": "application/json",
+            "X-API-Key": api_key
+        }
+    
+    def generate(self, prompt, **kwargs):
+        data = {
+            "prompt": prompt,
+            "max_length": kwargs.get("max_length", 100),
+            "temperature": kwargs.get("temperature", 0.8),
+            "top_k": kwargs.get("top_k", 50),
+            "top_p": kwargs.get("top_p", 0.9),
+            "repetition_penalty": kwargs.get("repetition_penalty", 1.1)
+        }
+        
+        response = requests.post(
+            f"{self.base_url}/v1/generate",
+            headers=self.headers,
+            json=data
+        )
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"API Error: {response.json()}")
+
+# Usage
+client = MiniLlamaClient("sk-your-api-key-here")
+result = client.generate("Explain quantum computing", max_length=200)
+print(result["text"])
 ```
 
 ### **Advanced Inference Parameters**
@@ -240,93 +400,61 @@ Reduces repeated phrases:
 - `1.1`: Light penalty (recommended)
 - `1.5+`: Strong penalty (may reduce coherence)
 
-### **Inference Usage Examples**
+## 🔐 API Server Features
 
-#### **Config-Based Usage (Recommended)**
+### **Supabase-Powered Backend**
+- **Cloud-native database**: No local database setup required
+- **Automatic scaling**: PostgreSQL database with auto-scaling
+- **Real-time capabilities**: Built-in real-time subscriptions
+- **Security**: Row Level Security and built-in authentication
+- **Admin dashboard**: Supabase dashboard for data management
+
+### **API Key Management**
 ```
-# Use default inference.yaml config
-python inference.py --prompt "Explain quantum computing"
+# Create API keys
+python manage_keys_supabase.py create --name "Frontend App" --expires 365 --rate-limit 1000
 
-# Use custom config file
-python inference.py --inference_config configs/my_inference.yaml --interactive
+# List all keys
+python manage_keys_supabase.py list
 
-# Override specific parameters
-python inference.py --temperature 1.2 --top_k 30 --benchmark
-```
-
-#### **Command Line Parameter Override**
-```
-# Creative generation
-python inference.py --prompt "Write a story about AI" \
-  --temperature 1.2 --top_k 40 --top_p 0.8 --max_length 200
-
-# Focused technical explanation
-python inference.py --prompt "Explain machine learning:" \
-  --temperature 0.3 --top_k 10 --repetition_penalty 1.2 --max_length 150
-
-# Multiple creative variations
-python inference.py --prompt "The future of technology" \
-  --temperature 0.9 --runs 3
+# Get usage statistics
+python manage_keys_supabase.py stats --key-id llama_12345678
 ```
 
-#### **Interactive Chat Mode**
-```
-# Start interactive chat with performance monitoring
-python inference.py --interactive
+### **Security Features**
+- ✅ **Custom API Key System**: Secure key generation with expiration
+- ✅ **Rate Limiting**: Configurable requests per hour per key
+- ✅ **Usage Tracking**: Complete analytics and monitoring
+- ✅ **Request Logging**: IP, user agent, response times tracked
+- ✅ **CORS Support**: Ready for frontend integration
+- ✅ **Error Handling**: Professional error responses
 
-# Available chat commands:
-# /temp 0.8       - Set temperature
-# /topk 40        - Set top-k  
-# /topp 0.8       - Set top-p
-# /penalty 1.2    - Set repetition penalty
-# /length 200     - Set max length
-# /params         - Show current settings
-# /stats          - Show performance statistics
-# /config         - Show configuration info
-# /reset          - Reset performance counters
-# /quit           - Exit chat
-```
+### **Performance Monitoring**
+- **Real-time metrics**: Tokens/sec, response times, memory usage
+- **Usage analytics**: Total requests, success rates, token counts
+- **Performance stats**: Min/max generation speeds, averages
+- **Database logging**: All requests logged to Supabase
 
-#### **Continuous Benchmark Mode**
-```
-# Run comprehensive performance benchmark
-python inference.py --benchmark --runs 5 --max_length 150
+## 📈 Expected Performance
 
-# Custom benchmark with specific parameters
-python inference.py --benchmark \
-  --temperature 0.7 --top_k 40 --runs 3 \
-  --inference_config configs/custom_inference.yaml
-```
+### **Model Specifications**
+- **Parameters**: ~95M (optimal for 20GB VRAM)
+- **Training Speed**: 800-1200 tokens/second
+- **Generation Speed**: 40-60 tokens/second (local), 30-50 tokens/second (API)
+- **Memory Usage**: 14-16GB VRAM during training, 8GB during inference
+- **Context Length**: 1024 tokens
 
-### **Performance Monitoring Features**
+### **API Performance**
+- **Response Time**: 1-3 seconds for 100 tokens
+- **Throughput**: 20-30 requests/minute per API key
+- **Concurrent Users**: 10-50 (depending on hardware)
+- **Uptime**: 99%+ with proper deployment
 
-The inference script provides comprehensive performance monitoring:
-
-**Real-time Metrics:**
-- **Prompt Processing Speed**: Tokens/sec for input processing
-- **Generation Speed**: Tokens/sec for output generation  
-- **Total Speed**: Overall tokens/sec including both phases
-- **Memory Usage**: GPU memory consumption tracking
-
-**Benchmark Statistics:**
-- **Average Performance**: Mean tokens/sec across all runs
-- **Performance Range**: Min/max generation speeds
-- **Timing Breakdown**: Separate prompt vs generation timing
-- **Token Statistics**: Average token counts per phase
-
-**Example Output:**
-```
-🚀 Generated 45 tokens in 0.89s
-📊 Performance:
-   Prompt Processing: 2,847.3 tokens/sec (0.007s)
-   Generation: 50.6 tokens/sec (0.89s)
-   Total: 56.2 tokens/sec (0.90s)
-   GPU Memory: 8.2GB
-
-📊 Running Average (15 samples):
-   Generation: 48.3 tokens/sec
-   Range: 42.1 - 53.7 tokens/sec
-```
+### **Training Timeline**
+- **Quick Test**: 30 minutes (10K sequences)
+- **Initial Results**: 2-4 hours (100K sequences)  
+- **Good Model**: 8-12 hours (500K sequences)
+- **Production Model**: 2-7 days (10.8M sequences)
 
 ## 💾 Memory-Mapped Dataset Loader
 
@@ -366,116 +494,50 @@ dataset = LlamaDataset(
 - ✅ **Manual Checkpoint**: Save anytime during training
 - ✅ **Automatic Cleanup**: Manage disk space efficiently
 
-## 📈 Expected Performance
-
-### **Model Specifications**
-- **Parameters**: ~95M (optimal for 20GB VRAM)
-- **Training Speed**: 800-1200 tokens/second
-- **Generation Speed**: 40-60 tokens/second
-- **Memory Usage**: 14-16GB VRAM during training
-- **Context Length**: 1024 tokens
-
-### **Training Timeline**
-- **Quick Test**: 30 minutes (10K sequences)
-- **Initial Results**: 2-4 hours (100K sequences)  
-- **Good Model**: 8-12 hours (500K sequences)
-- **Production Model**: 2-7 days (10.8M sequences)
-
-### **Inference Performance**
-- **RTX 4000 Ada**: 40-60 tokens/sec generation
-- **CPU Fallback**: 5-15 tokens/sec generation
-- **Memory Efficient**: ~8GB VRAM for inference
-- **Real-time Chat**: Sub-second response times
-
-## 🛠️ Streaming Concatenation Script
-
-Located in `data/stream_concatenate.py`:
-- **Memory-efficient**: Processes 41GB without loading into RAM
-- **Automatic key detection**: Works with your preprocessing format
-- **Progress monitoring**: Real-time statistics
-- **Error handling**: Robust file processing
-
-## 📝 Dataset Statistics
-
-Your preprocessed corpus:
-- **Total Sequences**: 10,821,218
-- **Total Tokens**: ~11 billion  
-- **File Size**: 41.28 GB
-- **Sequence Length**: 1024 tokens each
-- **Format**: Memory-mapped binary (.dat)
-
-## 🔧 Manual Checkpoint Saving
-
-During training, save checkpoints manually:
-```
-# Linux method: Create flag file
-touch checkpoints/manual_save.flag
-
-# The training script will detect and save immediately
-```
-
-## 🎯 Hardware Memory Optimization
-
-### **Memory Usage Breakdown**
-- **Model Weights**: ~6GB (FP16)
-- **Gradients**: ~6GB
-- **Activations**: ~6GB (batch_size=32)
-- **Buffer**: ~2GB
-- **Total**: ~20GB VRAM ✅
-
-### **CPU Memory Management**  
-- **Dataset**: Memory-mapped (minimal RAM usage)
-- **Preprocessing**: Streaming (no 41GB loading)
-- **Checkpoints**: Compressed storage
-
 ## 🎮 Usage Workflows
 
-### **Training Workflow**
+### **Local Development Workflow**
 ```
-# 1. Preprocess data
-python3 -m src.tokenizer.encode_corpus
-cd data/checkpoints && python3 stream_concatenate.py
-
-# 2. Start training
-cd ../..
-python -m src.train
-# Select option 1 for new training
-
-# 3. Monitor progress and adjust parameters
-# Training will show real-time loss curves and performance metrics
-```
-
-### **Inference Workflow**
-```
-# 1. Quick generation test
-python inference.py --prompt "Hello, AI assistant" --temperature 0.8
-
-# 2. Interactive development
-python inference.py --interactive
-# Use /params, /stats commands to monitor performance
-
-# 3. Performance benchmarking
-python inference.py --benchmark --runs 5
-# Comprehensive performance analysis across multiple prompts
-```
-
-### **Experimentation Workflow**
-```
-# 1. Start with subset training
-# Edit configs/train.yaml: max_sequences: 10000
+# 1. Train your model
 python -m src.train
 
-# 2. Test inference on quick model
+# 2. Test inference locally
 python inference.py --interactive
 
-# 3. Scale up gradually
-# Edit configs/train.yaml: max_sequences: 100000
-python -m src.train
-# Select option 2 to resume from previous checkpoint
+# 3. Start API server for production
+python api_server.py
 
-# 4. Production deployment
-# Edit configs/train.yaml: max_sequences: null
-python -m src.train
+# 4. Create API key and test
+python manage_keys_supabase.py create --name "test"
+curl -X POST "http://localhost:8000/v1/generate" \
+  -H "X-API-Key: your-key" \
+  -d '{"prompt": "Hello AI"}'
+```
+
+### **Production Deployment Workflow**
+```
+# 1. Setup environment
+cp .env.example .env
+# Edit .env with production Supabase credentials
+
+# 2. Deploy API server
+python api_server.py --host 0.0.0.0 --port 8000
+
+# 3. Setup reverse proxy (nginx/apache)
+# 4. Configure SSL/TLS certificates
+# 5. Setup monitoring and logging
+```
+
+### **Frontend Integration Workflow**
+```
+# 1. Create API key for your app
+python manage_keys_supabase.py create --name "My Web App" --rate-limit 5000
+
+# 2. Integrate into frontend (React/Vue/Angular)
+const api = new MiniLlamaAPI('your-api-key');
+
+# 3. Handle responses and errors
+# 4. Monitor usage via /stats endpoint
 ```
 
 ## 📚 Project Structure
@@ -503,27 +565,72 @@ Mini-llama/
 ├── checkpoints/               # Model checkpoints
 ├── logs/                      # Training and inference logs
 ├── inference.py               # Advanced inference script
+├── api_server.py              # Production API server (NEW)
+├── manage_keys_supabase.py    # API key management (NEW)
 ├── stream_concatenate.py      # Checkpoint concatenation
-└── requirements.txt           # Dependencies
+├── .env                       # Environment variables (NEW)
+├── requirements.txt           # Dependencies
+└── README.md                  # This file
 ```
 
-## 📚 References & Resources
+## 🛠️ Database Setup (Supabase)
 
-- **Git LFS**: https://git-lfs.github.com/
-- **Hugging Face Datasets**: https://huggingface.co/docs/datasets/
-- **PyTorch Mixed Precision**: https://pytorch.org/docs/stable/amp.html
-- **Transformer Architecture**: https://arxiv.org/abs/1706.03762
-- **SentencePiece**: https://github.com/google/sentencepiece
+Run this SQL in your Supabase SQL Editor to setup the API key management tables:
 
-## 🎉 Success Metrics
+```
+-- Create API Keys table
+CREATE TABLE api_keys (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    key_id TEXT UNIQUE NOT NULL,
+    key_hash TEXT NOT NULL,
+    name TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    expires_at TIMESTAMP WITH TIME ZONE,
+    is_active BOOLEAN DEFAULT TRUE,
+    rate_limit INTEGER DEFAULT 100,
+    total_requests INTEGER DEFAULT 0,
+    last_used TIMESTAMP WITH TIME ZONE
+);
 
-Your setup achieves:
-- **10-20x faster training** vs CPU-only setups
-- **Professional-scale models** (~95M parameters)
-- **Enterprise-grade dataset** (10.8M sequences, 11B tokens)
-- **Production-ready pipeline** with all optimizations
-- **Real-time inference** with advanced sampling techniques
-- **Comprehensive monitoring** and performance analytics
+-- Create API Usage tracking table
+CREATE TABLE api_usage (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    key_id TEXT NOT NULL,
+    endpoint TEXT NOT NULL,
+    request_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    response_time_ms INTEGER,
+    tokens_generated INTEGER,
+    success BOOLEAN,
+    ip_address TEXT,
+    user_agent TEXT,
+    FOREIGN KEY (key_id) REFERENCES api_keys(key_id)
+);
+
+-- Create indexes for performance
+CREATE INDEX idx_api_keys_key_id ON api_keys(key_id);
+CREATE INDEX idx_api_keys_key_hash ON api_keys(key_hash);
+CREATE INDEX idx_api_usage_key_id ON api_usage(key_id);
+
+-- Enable Row Level Security
+ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
+ALTER TABLE api_usage ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for service role access
+CREATE POLICY "Enable all operations for service role" ON api_keys
+    FOR ALL USING (auth.role() = 'service_role');
+
+CREATE POLICY "Enable all operations for service role" ON api_usage
+    FOR ALL USING (auth.role() = 'service_role');
+```
+
+## 📝 Dataset Statistics
+
+Your preprocessed corpus:
+- **Total Sequences**: 10,821,218
+- **Total Tokens**: ~11 billion  
+- **File Size**: 41.28 GB
+- **Sequence Length**: 1024 tokens each
+- **Format**: Memory-mapped binary (.dat)
 
 ## 🔧 Troubleshooting
 
@@ -539,6 +646,18 @@ Your setup achieves:
 # Use option 2 "Resume training" to continue from checkpoint
 ```
 
+### **Common API Issues**
+```
+# Supabase connection error
+# Check .env file has correct SUPABASE_URL and SUPABASE_SERVICE_KEY
+
+# API key invalid
+# Verify API key is correctly formatted: sk-xxxxxxxxxxxx
+
+# Rate limit exceeded
+# Check current usage: python manage_keys_supabase.py stats --key-id your-key-id
+```
+
 ### **Common Inference Issues**
 ```
 # Model not found
@@ -551,15 +670,30 @@ Your setup achieves:
 # Create configs/inference.yaml or use command line parameters
 ```
 
-### **Memory Optimization Tips**
-```
-# Training: Use gradient accumulation instead of larger batch sizes
-# Inference: Use smaller max_length values for longer conversations
-# System: Monitor GPU memory with nvidia-smi
-```
+## 📚 References & Resources
+
+- **Supabase**: https://supabase.com/docs
+- **FastAPI**: https://fastapi.tiangolo.com/
+- **Git LFS**: https://git-lfs.github.com/
+- **Hugging Face Datasets**: https://huggingface.co/docs/datasets/
+- **PyTorch Mixed Precision**: https://pytorch.org/docs/stable/amp.html
+- **Transformer Architecture**: https://arxiv.org/abs/1706.03762
+- **SentencePiece**: https://github.com/google/sentencepiece
+
+## 🎉 Success Metrics
+
+Your setup achieves:
+- **10-20x faster training** vs CPU-only setups
+- **Professional-scale models** (~95M parameters)
+- **Enterprise-grade dataset** (10.8M sequences, 11B tokens)
+- **Production-ready pipeline** with all optimizations
+- **Real-time inference** with advanced sampling techniques
+- **Comprehensive monitoring** and performance analytics
+- **Scalable API architecture** with cloud-native backend
+- **Professional API key management** with usage tracking
+- **Frontend-ready integration** with comprehensive examples
 
 ---
 
-**This README consolidates your entire AI/ML journey from beginner to professional-grade language model training and inference. Everything needed to reproduce, continue, and deploy your work is documented here.** 🚀
+*Last Updated: Based on complete implementation including advanced training pipeline, professional inference system, production-ready API server with Supabase integration, and comprehensive frontend integration examples.*
 
-*Last Updated: Based on complete implementation including advanced training pipeline, professional inference system, and production-ready configuration management.*

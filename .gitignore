@@ -1,14 +1,100 @@
 # Python virtual environments
 venv/
 myenv/
+env/
+.venv/
+
+# Big docs
+checkpoints/
+data/
 
 # Python cache and bytecode
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
 
-# Data and checkpoints
-data/
-checkpoints/
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Local files
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.qodo/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Environment variables (CRITICAL for API keys)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# AI/ML specific files
+data/                    # Raw datasets
+checkpoints/             # Model checkpoints
+*.pkl                    # Pickle files
+*.h5                     # HDF5 files
+*.npz                    # NumPy compressed files (except specific ones)
+*.pt                     # PyTorch model files (except best models)
+*.pth                    # PyTorch model files
+wandb/                   # Weights & Biases logs
+tensorboard_logs/        # TensorBoard logs
+mlruns/                  # MLflow runs
+
+# Jupyter Notebooks checkpoints
+.ipynb_checkpoints/
+
+# API and database files
+api_keys.db              # SQLite database (if using local SQLite)
+*.sqlite
+*.sqlite3
+
+# Large data files (but allow config files)
+corpus_ids_final.dat     # Your large preprocessed file
+*.txt                    # Large text files
+!requirements.txt        # Exception: keep requirements
+!README.txt              # Exception: keep README
+
+# Temporary and local files
+tmp/
+temp/
 local.txt
+test_output/
+
+# Python testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Documentation builds
+docs/_build/
